@@ -1,238 +1,243 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wedding Invitation Generator</title>
-    
+    <title>വിവാഹ ക്ഷണപത്രം</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        /* --- Import Google Fonts --- */
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Great+Vibes&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Thasadith:wght@700&display=swap');
 
-        /* --- Page Layout --- */
         body {
-            font-family: 'Cormorant Garamond', serif;
-            background-color: #e9e9e9;
-            color: #333;
+            font-family: 'Manjari', sans-serif;
+            background-color: #f0eada;
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            gap: 40px;
-            padding: 40px;
+            gap: 30px;
+            padding: 30px;
             flex-wrap: wrap;
         }
 
         .editor, .preview {
             background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* --- Editor Panel (The Form) --- */
-        .editor {
-            width: 350px;
-        }
-        .editor h2 {
-            margin-top: 0;
-            font-weight: 600;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
-        }
+        .editor { width: 350px; }
+        .editor h2 { margin-top: 0; margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid #ddd; padding-bottom: 10px; color: #5a4a3a; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 700; color: #555; }
         .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            box-sizing: border-box;
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+            font-family: 'Manjari', sans-serif; font-size: 16px; box-sizing: border-box;
         }
+
         #download-btn {
-            width: 100%;
-            padding: 15px;
-            background-color: #8c7a68;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
+            width: 100%; padding: 15px; background-color: #8B4513; color: white; border: none;
+            border-radius: 5px; font-size: 18px; font-weight: 700; cursor: pointer;
             transition: background-color 0.3s;
         }
-        #download-btn:hover {
-            background-color: #6a5a48;
-        }
+        #download-btn:hover { background-color: #65320d; }
 
-        /* --- Preview Panel (The Invitation) --- */
-        .preview {
-            width: 550px;
-        }
+        .preview { width: 550px; }
+
         .invitation-card {
             position: relative;
-            background-color: #ffffff;
-            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
-            padding: 50px;
-            border: 1px solid #e0d9cd;
+            background-color: #fdf5e6; /* Parchment color */
+            padding: 40px;
             text-align: center;
+            border: 1px solid #ded8cd;
+            box-shadow: inset 0 0 0 1px #ded8cd; /* Inner border effect */
+            color: #4a3c2c;
         }
 
-        /* Decorative floral elements */
-        .invitation-card::before, .invitation-card::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background-image: url('https://i.imgur.com/eun3a4E.png');
-            background-repeat: no-repeat;
-            background-size: contain;
-            width: 80%;
-            height: 150px;
-            z-index: 1;
+        .vivaham-title {
+            font-family: 'Thasadith', sans-serif;
+            font-size: 38px;
+            font-weight: 700;
+            color: #c45d5d;
+            margin-bottom: 20px;
         }
-        .invitation-card::before { top: -60px; }
-        .invitation-card::after { bottom: -60px; transform: translateX(-50%) rotate(180deg); }
 
-        /* Text styling for the invitation */
-        .invitation-text { color: #5d5d5d; }
-        .intro-text { font-size: 16px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; }
-        .names { font-family: 'Great Vibes', cursive; font-size: 70px; color: #333; margin: 20px 0; line-height: 1.2; font-weight: normal; }
-        .ampersand { font-size: 50px; font-style: italic; color: #8c7a68; }
-        .main-request { font-size: 18px; line-height: 1.6; margin: 30px 0; }
-        .details { margin: 40px 0; font-size: 17px; line-height: 1.8; white-space: pre-wrap; /* Allows line breaks from textarea */ }
-        .reception-text { font-size: 16px; letter-spacing: 2px; text-transform: uppercase; margin-top: 40px; }
+        .parent-details {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .names-block { margin: 15px 0; }
+
+        .name {
+            font-family: 'Thasadith', sans-serif;
+            font-size: 44px;
+            font-weight: 700;
+            color: #3b2e20;
+            line-height: 1.2;
+        }
+        
+        .connector {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .event-details, .reception-details {
+            margin: 25px auto;
+            font-size: 16px;
+            line-height: 1.8;
+            white-space: pre-wrap; /* To respect line breaks from textarea */
+            max-width: 400px;
+        }
+        
+        .invitation-request {
+            font-size: 16px;
+            margin: 20px auto;
+            max-width: 450px;
+        }
+
+        .regards, .compliments {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
     </style>
 </head>
 <body>
 
     <div class="editor">
-        <h2>Invitation Details</h2>
-        
+        <h2>ക്ഷണവിവരങ്ങൾ</h2>
         <div class="form-group">
-            <label for="name1">First Name (Person 1)</label>
-            <input type="text" id="name1" value="Olivia Wilson">
+            <label for="groomName">വരൻ്റെ പേര്</label>
+            <input type="text" id="groomName" value="ബിനചന്ദ്രൻ">
         </div>
-
         <div class="form-group">
-            <label for="name2">First Name (Person 2)</label>
-            <input type="text" id="name2" value="Daniel Taylor">
+            <label for="groomDetails">വരൻ്റെ വിലാസം</label>
+            <textarea id="groomDetails" rows="3">S/o ചന്ദ്രൻ എൻ & സരസ്വതി പി
+തുണ്ടിൽ കിഴക്കതിൽ, തഴവല്ലൂർ പി.ഓ, കൊല്ലം</textarea>
         </div>
-
         <div class="form-group">
-            <label for="event-details">Date, Time & Location</label>
-            <textarea id="event-details" rows="5">Saturday, the twenty-third of August
-Two thousand twenty-five
-At half past four in the afternoon
-The Grand Estate
-2501 Beacon Hill Drive, Oak Brook, Illinois</textarea>
+            <label for="brideName">വധുവിൻ്റെ പേര്</label>
+            <input type="text" id="brideName" value="കാവ്യ വിജയൻ">
         </div>
-
-        <button id="download-btn">Download as PDF</button>
+        <div class="form-group">
+            <label for="brideDetails">വധുവിൻ്റെ വിലാസം</label>
+            <textarea id="brideDetails" rows="3">D/o വിജയൻ പി & ശ്രീകല വി
+കാർത്തിക, അടൂർ, പറക്കോട്</textarea>
+        </div>
+        <div class="form-group">
+            <label for="eventDetails">തീയതി, സമയം, സ്ഥലം</label>
+            <textarea id="eventDetails" rows="4">04 ഫെബ്രുവരി 2024, ഞായർ, 1199 മകരം 21
+മുഹൂർത്തം : പകൽ 10:46 കഴിഞ്ഞു 11:30 നകം
+മധുരം ഓഡിറ്റോറിയം, കിളിവയൽ, അടൂർ</textarea>
+        </div>
+         <div class="form-group">
+            <label for="receptionDetails">വിവാഹശേഷം (സൽക്കാരം)</label>
+            <textarea id="receptionDetails" rows="3">വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 5.00 മണി മുതൽ അനുഗ്രഹ ഓഡിറ്റോറിയം ഇ.എസ്.ഐ. ജംഗ്ഷൻ, യുവമല</textarea>
+        </div>
+        <button id="download-btn">PDF ആയി ഡൗൺലോഡ് ചെയ്യുക</button>
     </div>
 
     <div class="preview">
         <div id="invitation-preview" class="invitation-card">
-            <div class="invitation-text">
-                <p class="intro-text">Together with their families</p>
-                <h1 class="names">
-                    <span id="preview-name1">Olivia Wilson</span><br>
-                    <span class="ampersand">&</span><br>
-                    <span id="preview-name2">Daniel Taylor</span>
-                </h1>
-                <p class="main-request">
-                    Request the pleasure of your company<br>at their wedding
-                </p>
-                <div class="details" id="preview-details">
-                    Saturday, the twenty-third of August<br>
-                    Two thousand twenty-five<br>
-                    At half past four in the afternoon<br>
-                    <strong>The Grand Estate</strong><br>
-                    2501 Beacon Hill Drive, Oak Brook, Illinois
-                </div>
-                <p class="reception-text">
-                    Reception to follow
-                </p>
+            
+            <h1 class="vivaham-title">... വിവാഹം ...</h1>
+            
+            <div class="parent-details" id="preview-groomDetails">
+                S/o ചന്ദ്രൻ എൻ & സരസ്വതി പി<br>
+                തുണ്ടിൽ കിഴക്കതിൽ, തഴവല്ലൂർ പി.ഓ, കൊല്ലം
             </div>
+            
+            <div class="names-block">
+                <div class="name" id="preview-groomName">ബിനചന്ദ്രൻ</div>
+                <div class="connector">കൂടെ</div>
+                <div class="name" id="preview-brideName">കാവ്യ വിജയൻ</div>
+            </div>
+            
+            <div class="parent-details" id="preview-brideDetails">
+                D/o വിജയൻ പി & ശ്രീകല വി<br>
+                കാർത്തിക, അടൂർ, പറക്കോട്
+            </div>
+
+            <div class="event-details" id="preview-eventDetails">
+                04 ഫെബ്രുവരി 2024, ഞായർ, 1199 മകരം 21
+                മുഹൂർത്തം : പകൽ 10:46 കഴിഞ്ഞു 11:30 നകം
+                മധുരം ഓഡിറ്റോറിയം, കിളിവയൽ, അടൂർ
+            </div>
+
+            <p class="invitation-request">
+                പ്രസ്തുത മംഗള കർമ്മം ധന്യമാക്കുവാൻ തങ്ങളുടെ സകുടുംബ സാന്നിദ്ധ്യം സാദരം ക്ഷണിച്ചുകൊള്ളുന്നു.
+            </p>
+            
+            <div class="reception-details" id="preview-receptionDetails">
+                വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 5.00 മണി മുതൽ അനുഗ്രഹ ഓഡിറ്റോറിയം ഇ.എസ്.ഐ. ജംഗ്ഷൻ, യുവമല
+            </div>
+            
+            <div class="regards">
+                <b>സ്നേഹപൂർവ്വം</b><br>
+                ചന്ദ്രൻ എൻ & സരസ്വതി പി
+            </div>
+            <div class="compliments">
+                <b>ഉപചാരപൂർവ്വം :</b> ജ്യോതിഷ്, അജിമോൾ, കാർത്തിക്
+            </div>
+
         </div>
     </div>
 
-
     <script>
-        // Make sure we have access to the libraries
         const { jsPDF } = window.jspdf;
 
-        // --- Step 1: Link the form fields to the preview elements ---
-        const name1Input = document.getElementById('name1');
-        const name2Input = document.getElementById('name2');
-        const detailsInput = document.getElementById('event-details');
+        // Input fields
+        const groomNameInput = document.getElementById('groomName');
+        const groomDetailsInput = document.getElementById('groomDetails');
+        const brideNameInput = document.getElementById('brideName');
+        const brideDetailsInput = document.getElementById('brideDetails');
+        const eventDetailsInput = document.getElementById('eventDetails');
+        const receptionDetailsInput = document.getElementById('receptionDetails');
 
-        const name1Preview = document.getElementById('preview-name1');
-        const name2Preview = document.getElementById('preview-name2');
-        const detailsPreview = document.getElementById('preview-details');
-        
-        // --- Step 2: Create functions to update the preview ---
+        // Preview elements
+        const groomNamePreview = document.getElementById('preview-groomName');
+        const groomDetailsPreview = document.getElementById('preview-groomDetails');
+        const brideNamePreview = document.getElementById('preview-brideName');
+        const brideDetailsPreview = document.getElementById('preview-brideDetails');
+        const eventDetailsPreview = document.getElementById('preview-eventDetails');
+        const receptionDetailsPreview = document.getElementById('preview-receptionDetails');
+
         function updatePreview() {
-            // Update the names
-            name1Preview.innerText = name1Input.value;
-            name2Preview.innerText = name2Input.value;
-            
-            // Update the details, converting newline characters to <br> tags for HTML
-            detailsPreview.innerHTML = detailsInput.value.replace(/\n/g, '<br>');
+            groomNamePreview.innerText = groomNameInput.value;
+            groomDetailsPreview.innerHTML = groomDetailsInput.value.replace(/\n/g, '<br>');
+            brideNamePreview.innerText = brideNameInput.value;
+            brideDetailsPreview.innerHTML = brideDetailsInput.value.replace(/\n/g, '<br>');
+            eventDetailsPreview.innerText = eventDetailsInput.value;
+            receptionDetailsPreview.innerText = receptionDetailsInput.value;
         }
 
-        // --- Step 3: Listen for changes in the form fields ---
-        // 'input' event fires every time the user types something
-        name1Input.addEventListener('input', updatePreview);
-        name2Input.addEventListener('input', updatePreview);
-        detailsInput.addEventListener('input', updatePreview);
+        // Add event listeners to all inputs
+        document.querySelectorAll('.editor input, .editor textarea').forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
 
-        // --- Step 4: Handle the PDF download button click ---
+        // PDF Download functionality
         const downloadButton = document.getElementById('download-btn');
         downloadButton.addEventListener('click', () => {
-            const invitationElement = document.getElementById('invitation-preview');
-
-            // Use html2canvas to take a "screenshot" of the invitation div
-            html2canvas(invitationElement, {
-                scale: 2, // Increase scale for better resolution
-                useCORS: true // Important for external images like the floral graphics
-            }).then(canvas => {
-                // Get the image data from the canvas
-                const imageData = canvas.toDataURL('image/png');
-
-                // Create a new PDF document (A5 size is good for invitations)
-                // Dimensions for A5 in 'mm' are 148 x 210
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a5'
-                });
-
+            html2canvas(document.getElementById('invitation-preview'), { scale: 2, useCORS: true })
+            .then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                // A5 format is 148 x 210 mm
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
-
-                // Add the image to the PDF, making it fit the page
-                pdf.addImage(imageData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                
-                // Save the PDF
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save('wedding-invitation.pdf');
             });
         });
 
-        // Initialize the preview with default values when the page loads
+        // Initial call to populate the preview
         updatePreview();
     </script>
 </body>
