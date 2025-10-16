@@ -3,242 +3,463 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>വിവാഹ ക്ഷണപത്രം</title>
+    <title>വിവാഹ ക്ഷണപത്രം ജനറേറ്റർ</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Thasadith:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Thasadith:wght@700&family=Cinzel+Decorative:wght@700&family=Cormorant+Garamond:wght@400;700&family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&family=Dancing+Script:wght@700&family=Tiro+Malayalam&family=Kalam:wght@400;700&family=Great+Vibes&family=Marcellus&family=Lato:wght@300;400&family=Sacramento&family=Poppins:wght@300;500&family=Lateef&display=swap');
+
+        :root {
+            --primary-bg: #f5f5f5;
+            --editor-bg: #ffffff;
+            --preview-bg: #e0e0e0;
+            --text-color: #333;
+            --primary-accent: #8B4513;
+            --secondary-accent: #65320d;
+            --border-color: #ddd;
+            --card-width: 550px;
+        }
 
         body {
             font-family: 'Manjari', sans-serif;
-            background-color: #f0eada;
+            background-color: var(--primary-bg);
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .main-container { display: flex; min-height: 100vh; }
+        .editor {
+            width: 400px; padding: 30px; background-color: var(--editor-bg);
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1); overflow-y: auto; height: 100vh; position: sticky; top: 0;
+        }
+        .editor-header {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 30px;
-            padding: 30px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
         }
-
-        .editor, .preview {
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        .editor h2 { margin: 0; font-weight: 700; color: var(--primary-accent); }
+        .help-btn {
+            background: none; border: 1px solid var(--secondary-accent); color: var(--secondary-accent);
+            padding: 5px 12px; border-radius: 20px; cursor: pointer; font-family: 'Manjari', sans-serif;
+            font-weight: 700; transition: all 0.3s;
         }
-
-        .editor { width: 350px; }
-        .editor h2 { margin-top: 0; margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid #ddd; padding-bottom: 10px; color: #5a4a3a; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 700; color: #555; }
-        .form-group input, .form-group textarea {
+        .help-btn:hover { background: var(--secondary-accent); color: white; }
+        
+        details { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; overflow: hidden; }
+        details[open] { border-color: var(--primary-accent); }
+        summary {
+            font-weight: 700; color: var(--primary-accent); padding: 15px; cursor: pointer;
+            list-style: none; position: relative;
+        }
+        summary::after { content: '▼'; position: absolute; right: 20px; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(180deg); }
+        .accordion-content { padding: 0px 20px 20px 20px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; color: #555; }
+        .form-group input, .form-group textarea, .form-group select {
             width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
-            font-family: 'Manjari', sans-serif; font-size: 16px; box-sizing: border-box;
+            font-family: 'Manjari', sans-serif; font-size: 16px; box-sizing: border-box; transition: border-color 0.3s;
         }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-accent); outline: none; }
+        input[type="file"] { padding: 5px; }
+        input[type="color"] { padding: 2px; height: 40px; }
+        input[type="range"] { padding: 0; }
 
-        #download-btn {
-            width: 100%; padding: 15px; background-color: #8B4513; color: white; border: none;
-            border-radius: 5px; font-size: 18px; font-weight: 700; cursor: pointer;
-            transition: background-color 0.3s;
+        .button-container { display: flex; gap: 10px; margin-top: 20px; }
+        .button-container button {
+            width: 100%; padding: 15px; border: none; border-radius: 5px; font-size: 16px;
+            font-weight: 700; cursor: pointer; transition: all 0.3s;
         }
-        #download-btn:hover { background-color: #65320d; }
+        #download-btn { background-color: var(--primary-accent); color: white; }
+        #download-btn:hover { background-color: var(--secondary-accent); }
+        #download-btn:disabled { background-color: #a08c7d; cursor: not-allowed; }
+        #reset-btn { background-color: #f0f0f0; color: #555; border: 1px solid #ccc; }
+        #reset-btn:hover { background-color: #e0e0e0; }
 
-        .preview { width: 550px; }
+        .preview-area {
+            flex-grow: 1; padding: 40px; display: flex;
+            justify-content: center; align-items: flex-start; background-color: var(--preview-bg);
+        }
 
         .invitation-card {
-            position: relative;
-            background-color: #fdf5e6; /* Parchment color */
-            padding: 40px;
-            text-align: center;
-            border: 1px solid #ded8cd;
-            box-shadow: inset 0 0 0 1px #ded8cd; /* Inner border effect */
-            color: #4a3c2c;
+            width: var(--card-width); aspect-ratio: 5 / 7; background-color: white; padding: 40px;
+            text-align: center; transition: all 0.3s ease-in-out;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); display: flex; flex-direction: column;
+            position: relative; overflow: hidden;
+            --card-accent-color: #8B4513; --card-heading-font: 'Thasadith', sans-serif; --card-body-font: 'Manjari', sans-serif;
+            --card-bg-image: none; --card-bg-opacity: 1;
         }
-
-        .vivaham-title {
-            font-family: 'Thasadith', sans-serif;
-            font-size: 38px;
-            font-weight: 700;
-            color: #c45d5d;
-            margin-bottom: 20px;
+        .invitation-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--card-bg-image); background-size: cover; background-position: center;
+            opacity: var(--card-bg-opacity); z-index: 0; transition: opacity 0.3s;
         }
+        .invitation-card > * { position: relative; z-index: 1; }
+        .invitation-card * { transition: color 0.3s, font-family 0.3s; }
+        .invitation-card .name, .invitation-card .vivaham-title { font-family: var(--card-heading-font); }
+        .invitation-card .parent-details, .invitation-card .event-details, .invitation-card .invitation-request,
+        .invitation-card .reception-details, .invitation-card .regards, .invitation-card .compliments { font-family: var(--card-body-font); }
+        .invitation-card .top-symbol, .invitation-card .name, .invitation-card .vivaham-title { color: var(--card-accent-color); }
 
-        .parent-details {
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
+        /* THEME STYLES */
+        .theme-classic-brown { background-color: #fff; color: #333; }
+        .theme-royal-gold { background-color: #fdf5e6; color: #4a3c2c; border: 10px double #c9a963; }
+        .theme-midnight-blue { background-color: #0b1933; color: #e0e0e0; }
+        .theme-midnight-blue .connector, .theme-midnight-blue b { color: #f0f0f0; }
+        .theme-pastel-floral { background-color: #fff0f5; color: #5c5c5c; border: 1px solid #f8c8dc; }
+        .theme-emerald-green { background-color: #fafff5; color: #2F4F4F; border: 2px solid #006A4E; }
+        .theme-minimalist { background-color: #fff; color: #222; border: 1px solid #eee; }
+        .theme-rustic-kraft { color: #5d4a36; border: 2px dashed #7a6a53; background-color: #e8dcc4; }
+        .theme-watercolor { background-color: #f0f8ff; color: #4682B4; }
+        .theme-indian-saffron { background-color: #fff8e1; color: #8c230b; border: 5px solid #FF9933; }
+        .theme-vintage-lavender { background-color: #f5f3f7; color: #5c5470; border: 1px solid #dcd6e5; }
 
-        .names-block { margin: 15px 0; }
+        .top-symbol { font-size: 30px; margin-bottom: 10px; font-family: 'Lateef', serif; }
+        .vivaham-title { font-size: 38px; font-weight: 700; margin-bottom: 15px; }
+        #preview-photo-container { margin: 15px auto; width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 4px solid var(--card-accent-color); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        #preview-photo { width: 100%; height: 100%; object-fit: cover; }
+        .parent-details { font-size: 14px; line-height: 1.6; margin-bottom: 10px; }
+        .names-block { margin: 10px 0; }
+        .name { font-size: 42px; font-weight: 700; line-height: 1.2; }
+        .connector { font-size: 16px; font-weight: 700; margin: 5px 0; }
+        .event-details, .reception-details { margin: 20px auto; font-size: 15px; line-height: 1.8; white-space: pre-wrap; max-width: 400px; }
+        .invitation-request { font-size: 15px; margin: 15px auto; max-width: 450px; white-space: pre-wrap; }
+        .regards, .compliments { margin-top: 15px; font-size: 15px; white-space: pre-wrap; }
 
-        .name {
-            font-family: 'Thasadith', sans-serif;
-            font-size: 44px;
-            font-weight: 700;
-            color: #3b2e20;
-            line-height: 1.2;
-        }
+        #qrcode { position: absolute; bottom: 20px; right: 20px; background: white; padding: 5px; border-radius: 4px; }
+        #qrcode img { width: 80px !important; height: 80px !important; }
         
-        .connector {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 5px 0;
+        /* --- TUTORIAL STYLES --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            z-index: 1000; display: none;
+        }
+        #tutorial-tooltip {
+            position: absolute; background: white; padding: 20px; border-radius: 8px;
+            max-width: 350px; z-index: 1002; box-shadow: 0 0 0 4px white;
+        }
+        #tutorial-text { margin-bottom: 15px; line-height: 1.6; }
+        .tutorial-nav { display: flex; justify-content: space-between; align-items: center; }
+        .tutorial-highlight {
+            position: relative; z-index: 1001;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
+            border-radius: 5px;
         }
 
-        .event-details, .reception-details {
-            margin: 25px auto;
-            font-size: 16px;
-            line-height: 1.8;
-            white-space: pre-wrap; /* To respect line breaks from textarea */
-            max-width: 400px;
+        #loader { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .spinner {
+            border: 8px solid #f3f3f3; border-top: 8px solid var(--primary-accent); border-radius: 50%;
+            width: 60px; height: 60px; animation: spin 1s linear infinite;
+            position: absolute; left: 50%; top: 50%; margin-left: -30px; margin-top: -30px;
         }
-        
-        .invitation-request {
-            font-size: 16px;
-            margin: 20px auto;
-            max-width: 450px;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .regards, .compliments {
-            margin-top: 20px;
-            font-size: 16px;
+        @media (max-width: 1024px) {
+            .main-container { flex-direction: column; }
+            .editor { width: 100%; height: auto; position: relative; box-sizing: border-box; }
+            .preview-area { padding: 30px 15px; }
+            .invitation-card { width: 100%; max-width: 500px; }
         }
-
     </style>
 </head>
 <body>
-
-    <div class="editor">
-        <h2>ക്ഷണവിവരങ്ങൾ</h2>
-        <div class="form-group">
-            <label for="groomName">വരൻ്റെ പേര്</label>
-            <input type="text" id="groomName" value="ബിനചന്ദ്രൻ">
-        </div>
-        <div class="form-group">
-            <label for="groomDetails">വരൻ്റെ വിലാസം</label>
-            <textarea id="groomDetails" rows="3">S/o ചന്ദ്രൻ എൻ & സരസ്വതി പി
-തുണ്ടിൽ കിഴക്കതിൽ, തഴവല്ലൂർ പി.ഓ, കൊല്ലം</textarea>
-        </div>
-        <div class="form-group">
-            <label for="brideName">വധുവിൻ്റെ പേര്</label>
-            <input type="text" id="brideName" value="കാവ്യ വിജയൻ">
-        </div>
-        <div class="form-group">
-            <label for="brideDetails">വധുവിൻ്റെ വിലാസം</label>
-            <textarea id="brideDetails" rows="3">D/o വിജയൻ പി & ശ്രീകല വി
-കാർത്തിക, അടൂർ, പറക്കോട്</textarea>
-        </div>
-        <div class="form-group">
-            <label for="eventDetails">തീയതി, സമയം, സ്ഥലം</label>
-            <textarea id="eventDetails" rows="4">04 ഫെബ്രുവരി 2024, ഞായർ, 1199 മകരം 21
-മുഹൂർത്തം : പകൽ 10:46 കഴിഞ്ഞു 11:30 നകം
-മധുരം ഓഡിറ്റോറിയം, കിളിവയൽ, അടൂർ</textarea>
-        </div>
-         <div class="form-group">
-            <label for="receptionDetails">വിവാഹശേഷം (സൽക്കാരം)</label>
-            <textarea id="receptionDetails" rows="3">വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 5.00 മണി മുതൽ അനുഗ്രഹ ഓഡിറ്റോറിയം ഇ.എസ്.ഐ. ജംഗ്ഷൻ, യുവമല</textarea>
-        </div>
-        <button id="download-btn">PDF ആയി ഡൗൺലോഡ് ചെയ്യുക</button>
-    </div>
-
-    <div class="preview">
-        <div id="invitation-preview" class="invitation-card">
-            
-            <h1 class="vivaham-title">... വിവാഹം ...</h1>
-            
-            <div class="parent-details" id="preview-groomDetails">
-                S/o ചന്ദ്രൻ എൻ & സരസ്വതി പി<br>
-                തുണ്ടിൽ കിഴക്കതിൽ, തഴവല്ലൂർ പി.ഓ, കൊല്ലം
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <div id="tutorial-overlay" class="modal-overlay">
+        <div id="tutorial-tooltip">
+            <div id="tutorial-text"></div>
+            <div class="tutorial-nav">
+                <button id="tutorial-prev">മുമ്പത്തേത്</button>
+                <div><span id="tutorial-step-counter"></span></div>
+                <button id="tutorial-next">അടുത്തത്</button>
             </div>
-            
-            <div class="names-block">
-                <div class="name" id="preview-groomName">ബിനചന്ദ്രൻ</div>
-                <div class="connector">കൂടെ</div>
-                <div class="name" id="preview-brideName">കാവ്യ വിജയൻ</div>
-            </div>
-            
-            <div class="parent-details" id="preview-brideDetails">
-                D/o വിജയൻ പി & ശ്രീകല വി<br>
-                കാർത്തിക, അടൂർ, പറക്കോട്
-            </div>
-
-            <div class="event-details" id="preview-eventDetails">
-                04 ഫെബ്രുവരി 2024, ഞായർ, 1199 മകരം 21
-                മുഹൂർത്തം : പകൽ 10:46 കഴിഞ്ഞു 11:30 നകം
-                മധുരം ഓഡിറ്റോറിയം, കിളിവയൽ, അടൂർ
-            </div>
-
-            <p class="invitation-request">
-                പ്രസ്തുത മംഗള കർമ്മം ധന്യമാക്കുവാൻ തങ്ങളുടെ സകുടുംബ സാന്നിദ്ധ്യം സാദരം ക്ഷണിച്ചുകൊള്ളുന്നു.
-            </p>
-            
-            <div class="reception-details" id="preview-receptionDetails">
-                വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 5.00 മണി മുതൽ അനുഗ്രഹ ഓഡിറ്റോറിയം ഇ.എസ്.ഐ. ജംഗ്ഷൻ, യുവമല
-            </div>
-            
-            <div class="regards">
-                <b>സ്നേഹപൂർവ്വം</b><br>
-                ചന്ദ്രൻ എൻ & സരസ്വതി പി
-            </div>
-            <div class="compliments">
-                <b>ഉപചാരപൂർവ്വം :</b> ജ്യോതിഷ്, അജിമോൾ, കാർത്തിക്
-            </div>
-
+             <button id="tutorial-close" style="position: absolute; top: 10px; right: 10px; border: none; background: none; font-size: 20px; cursor: pointer;">×</button>
         </div>
     </div>
 
+    <div class="main-container">
+        <div class="editor">
+            <div class="editor-header">
+                <h2>ക്ഷണ രൂപകൽപ്പന</h2>
+                <button id="show-tutorial-btn" class="help-btn">? ട്യൂട്ടോറിയൽ</button>
+            </div>
+            
+            <details open id="theme-accordion">
+                <summary>തീം തിരഞ്ഞെടുക്കുക</summary>
+                <div class="accordion-content">
+                    <div class="form-group"><label for="themeSelect">ഡിസൈൻ തീം</label><select id="themeSelect"></select></div>
+                    <div class="form-group"><label for="religionSelect">മതം</label><select id="religionSelect"><option value="hindu">ഹിന്ദു</option><option value="christian">ക്രിസ്ത്യൻ</option><option value="muslim">മുസ്ലിം</option></select></div>
+                </div>
+            </details>
+            <details id="customize-accordion">
+                <summary>തീം മാറ്റങ്ങൾ വരുത്തുക</summary>
+                <div class="accordion-content">
+                    <div class="form-group"><label for="accentColor">പ്രധാന നിറം</label><input type="color" id="accentColor"></div>
+                    <div class="form-group">
+                        <label for="headingFont">തലക്കെട്ട് ഫോണ്ട്</label>
+                        <select id="headingFont">
+                            <option value="'Thasadith', sans-serif">Thasadith</option><option value="'Cinzel Decorative', cursive">Cinzel Decorative</option><option value="'Playfair Display', serif">Playfair Display</option>
+                            <option value="'Dancing Script', cursive">Dancing Script</option><option value="'Kalam', cursive">Kalam</option><option value="'Great Vibes', cursive">Great Vibes</option>
+                            <option value="'Marcellus', serif">Marcellus</option><option value="'Sacramento', cursive">Sacramento</option><option value="'Poppins', sans-serif">Poppins</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bodyFont">ഉള്ളടക്ക ഫോണ്ട്</label>
+                        <select id="bodyFont">
+                            <option value="'Manjari', sans-serif">Manjari</option><option value="'Tiro Malayalam', serif">Tiro Malayalam</option><option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+                            <option value="'Montserrat', sans-serif">Montserrat</option><option value="'Lato', sans-serif">Lato</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+            <details id="images-accordion">
+                <summary>ചിത്രങ്ങൾ</summary>
+                <div class="accordion-content">
+                    <div class="form-group"><label for="couplePhoto">ദമ്പതികളുടെ ഫോട്ടോ</label><input type="file" id="couplePhoto" accept="image/*"></div>
+                    <div class="form-group"><label for="bgPhoto">പശ്ചാത്തല ചിത്രം</label><input type="file" id="bgPhoto" accept="image/*"></div>
+                    <div class="form-group">
+                        <label for="bgOpacity">പശ്ചാത്തല സുതാര്യത</label>
+                        <input type="range" id="bgOpacity" min="0.1" max="1" step="0.05" value="1">
+                    </div>
+                </div>
+            </details>
+            <details id="content-accordion">
+                <summary>ക്ഷണത്തിൻ്റെ ഉള്ളടക്കം</summary>
+                <div class="accordion-content">
+                     <div class="form-group"><label for="vivahamTitle">വിവാഹ തലക്കെട്ട്</label><input type="text" id="vivahamTitle"></div>
+                     <div class="form-group"><label for="topSymbol">മുകളിലെ ചിഹ്നം</label><input type="text" id="topSymbol"></div>
+                     <div class="form-group"><label for="invitationRequest">ക്ഷണ വാക്യം</label><textarea id="invitationRequest" rows="4"></textarea></div>
+                </div>
+            </details>
+            <details id="details-accordion">
+                <summary>വിവാഹ വിവരങ്ങൾ</summary>
+                 <div class="accordion-content">
+                    <div class="form-group"><label for="groomName">വരൻ്റെ പേര്</label><input type="text" id="groomName"></div>
+                    <div class="form-group"><label for="groomDetails">വരൻ്റെ വിലാസം</label><textarea id="groomDetails" rows="3"></textarea></div>
+                    <div class="form-group"><label for="brideName">വധുവിൻ്റെ പേര്</label><input type="text" id="brideName"></div>
+                    <div class="form-group"><label for="brideDetails">വധുവിൻ്റെ വിലാസം</label><textarea id="brideDetails" rows="3"></textarea></div>
+                </div>
+            </details>
+            <details id="event-accordion">
+                <summary>ചടങ്ങിൻ്റെ വിവരങ്ങൾ</summary>
+                <div class="accordion-content">
+                    <div class="form-group"><label for="eventDetails">തീയതി, സമയം, സ്ഥലം</label><textarea id="eventDetails" rows="4"></textarea></div>
+                    <div class="form-group"><label for="receptionDetails">സൽക്കാരം</label><textarea id="receptionDetails" rows="3" placeholder="വിവാഹ സൽക്കാരം വിവരങ്ങൾ"></textarea></div>
+                    <div class="form-group"><label for="qrCodeUrl">QR കോഡ് ലിങ്ക് (e.g., Google Maps)</label><input type="url" id="qrCodeUrl" placeholder="https://maps.app.goo.gl/..."></div>
+                </div>
+            </details>
+            <details>
+                 <summary>അഭ്യർത്ഥന</summary>
+                 <div class="accordion-content">
+                     <div class="form-group"><label for="regardsDetails">സ്നേഹപൂർവ്വം</label><textarea id="regardsDetails" rows="2"></textarea></div>
+                    <div class="form-group"><label for="complimentsDetails">ഉപചാരപൂർവ്വം</label><textarea id="complimentsDetails" rows="2"></textarea></div>
+                </div>
+            </details>
+            <div class="button-container">
+                <button id="download-btn">PDF ഡൗൺലോഡ്</button>
+                <button id="reset-btn">പുനഃക്രമീകരിക്കുക</button>
+            </div>
+        </div>
+        <div class="preview-area">
+            <div id="invitation-preview" class="invitation-card">
+                <div class="top-symbol" id="preview-topSymbol"></div>
+                <h1 class="vivaham-title" id="preview-vivahamTitle"></h1>
+                <div id="preview-photo-container" style="display: none;"><img id="preview-photo" src="" alt="Couple Photo"></div>
+                <div class="parent-details" id="preview-groomDetails"></div>
+                <div class="names-block"><div class="name" id="preview-groomName"></div><div class="connector">കൂടെ</div><div class="name" id="preview-brideName"></div></div>
+                <div class="parent-details" id="preview-brideDetails"></div>
+                <div class="event-details" id="preview-eventDetails"></div>
+                <p class="invitation-request" id="preview-invitationRequest"></p>
+                <div class="reception-details" id="preview-receptionDetails"></div>
+                <div class="regards"><b>സ്നേഹപൂർവ്വം</b><br><span id="preview-regardsDetails"></span></div>
+                <div class="compliments"><b>ഉപചാരപൂർവ്വം :</b> <span id="preview-complimentsDetails"></span></div>
+                <div id="qrcode"></div>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        const { jsPDF } = window.jspdf;
+        window.jsPDF = window.jspdf.jsPDF;
+        // Data and constants...
+        const themes = {
+            classicBrown: { name: 'ക്ലാസിക് ബ്രൗൺ', cardClass: 'theme-classic-brown', accentColor: '#8B4513', headingFont: "'Thasadith', sans-serif", bodyFont: "'Manjari', sans-serif", backgroundImage: 'none' },
+            royalGold: { name: 'റോയൽ ഗോൾഡ്', cardClass: 'theme-royal-gold', accentColor: '#8a202e', headingFont: "'Cinzel Decorative', cursive", bodyFont: "'Cormorant Garamond', serif", backgroundImage: 'none' },
+            midnightBlue: { name: 'മിഡ്നൈറ്റ് ബ്ലൂ', cardClass: 'theme-midnight-blue', accentColor: '#d4af37', headingFont: "'Marcellus', serif", bodyFont: "'Lato', sans-serif", backgroundImage: 'none' },
+            pastelFloral: { name: 'പേസ്റ്റൽ ഫ്ലോറൽ', cardClass: 'theme-pastel-floral', accentColor: '#e18aaa', headingFont: "'Great Vibes', cursive", bodyFont: "'Poppins', sans-serif", backgroundImage: 'none' },
+            emeraldGreen: { name: 'എമറാൾഡ് ഗ്രീൻ', cardClass: 'theme-emerald-green', accentColor: '#006A4E', headingFont: "'Playfair Display', serif", bodyFont: "'Lato', sans-serif", backgroundImage: 'none' },
+            minimalist: { name: 'മിനിമലിസ്റ്റ്', cardClass: 'theme-minimalist', accentColor: '#333333', headingFont: "'Montserrat', sans-serif", bodyFont: "'Lato', sans-serif", backgroundImage: 'none' },
+            rusticKraft: { name: 'റസ്റ്റിക് ക്രാഫ്റ്റ്', cardClass: 'theme-rustic-kraft', accentColor: '#6b8e23', headingFont: "'Dancing Script', cursive", bodyFont: "'Playfair Display', serif", backgroundImage: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAr5JREFUeF7t2E1uE0EUQNFSoQKEBAoJJJBwAAmHkBCw4AAcQEKiBwgIIYkFJElI6B9z3t1MvTNvN2vVmpnJ2Jv/efY2s0fXkiggih1FxVFUHEXFUZQcRcVh7xQBQQqCEIQgCEIQgqAEQQiCEIQgCEIQhCAIQRD8L4I/A+GfbwIouB4EQQhCEIQgCEIQhCAIghAEYQhCEIQgCEIQhCAIQhCEIQhBEIQgCEIQhCAIghAEQQiCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhCEAQhCEIQhCAIQhAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhCEAQhCEIQhCAIQhAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhCEAQhCEIQhCAIQhAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhBEIQgCEIQhCAIghAEIQhCEIQgCEIQhCAIghAEIQhCEIQgCEEQhCAIQhCEIAhCEIQgCEEQhCAIQRAEQQgEIQhCEIQgCEIQBCEIQhAEIQhC4FUE/wIyfC/qiqLidM73fQAAAABJRU5ErkJggg==')" },
+            watercolor: { name: 'വാട്ടർകളർ', cardClass: 'theme-watercolor', accentColor: '#008080', headingFont: "'Sacramento', cursive", bodyFont: "'Poppins', sans-serif", backgroundImage: 'none' },
+            indianSaffron: { name: 'ഇന്ത്യൻ സാഫ്രോൺ', cardClass: 'theme-indian-saffron', accentColor: '#D44D02', headingFont: "'Kalam', cursive", bodyFont: "'Tiro Malayalam', serif", backgroundImage: 'none' },
+            vintageLavender: { name: 'വിന്റേജ് ലാവെൻഡർ', cardClass: 'theme-vintage-lavender', accentColor: '#8b5fbf', headingFont: "'Playfair Display', serif", bodyFont: "'Cormorant Garamond', serif", backgroundImage: 'none' }
+        };
+        const religionTemplates = {
+            hindu: { topSymbol: 'ॐ', title: '... വിവാഹം ...', requestText: 'പ്രസ്തുത മംഗള കർമ്മം ധന്യമാക്കുവാൻ തങ്ങളുടെ സകുടുംബ സാന്നിദ്ധ്യം സാദരം ക്ഷണിച്ചുകൊള്ളുന്നു.' },
+            christian: { topSymbol: '✝', title: 'വിവാഹ ആശംസകൾ', requestText: 'ദൈവ തിരുമുൻപാകെ ഞങ്ങളുടെ മക്കൾ വിവാഹിതരാവുകയാണ്. ഈ അനുഗ്രഹീത മുഹൂർത്തത്തിൽ നിങ്ങളുടെ പ്രാർത്ഥനാപൂർവ്വമായ സാന്നിദ്ധ്യം ഞങ്ങൾ സാദരം ക്ഷണിക്കുന്നു.' },
+            muslim: { topSymbol: 'بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَحِيمِ', title: 'نِكَاح', requestText: 'അല്ലാഹുവിൻ്റെ കാരുണ്യത്താൽ, ഞങ്ങളുടെ മക്കളുടെ നിക്കാഹ് കർമ്മത്തിലേക്ക് താങ്കളുടെയും കുടുംബത്തിൻ്റെയും മഹനീയ സാന്നിദ്ധ്യം വിനയപൂർവ്വം ക്ഷണിച്ചുകൊള്ളുന്നു.' }
+        };
+        const defaultValues = {
+            groomName: 'അർജുൻ', groomDetails: 'S/o മോഹൻദാസ് & ഗീത\nശ്രീനിലയം, കോഴിക്കോട്',
+            brideName: 'മീര', brideDetails: 'D/o പ്രകാശ് & രമ\nരമ്യഭവനം, എറണാകുളം',
+            eventDetails: '15 നവംബർ 2025, ശനി, 1201 വൃശ്ചികം 1\nമുഹൂർത്തം : പകൽ 11:00-നും 11:45-നും മദ്ധ്യേ\nശരവണ ഭവൻ ഓഡിറ്റോറിയം, തൃശ്ശൂർ',
+            receptionDetails: 'വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 6.00 മണി മുതൽ\nഹോട്ടൽ അവന്യൂ സെൻ്റർ, കൊച്ചി',
+            regardsDetails: 'മോഹൻദാസ് & ഗീത', complimentsDetails: 'ബന്ധുമിത്രാദികൾ'
+        };
 
-        // Input fields
-        const groomNameInput = document.getElementById('groomName');
-        const groomDetailsInput = document.getElementById('groomDetails');
-        const brideNameInput = document.getElementById('brideName');
-        const brideDetailsInput = document.getElementById('brideDetails');
-        const eventDetailsInput = document.getElementById('eventDetails');
-        const receptionDetailsInput = document.getElementById('receptionDetails');
+        const tutorialSteps = [
+            { target: '#theme-accordion summary', text: 'ആദ്യം, ഇവിടെ ക്ലിക്ക് ചെയ്ത് ഇഷ്ടമുള്ള ഒരു ഡിസൈൻ തീം തിരഞ്ഞെടുക്കുക. ഓരോ തീമിനും അതിൻ്റേതായ നിറങ്ങളും ഫോണ്ടുകളും ഉണ്ട്.' },
+            { target: '#customize-accordion summary', text: 'തീം ഇഷ്ടാനുസൃതമാക്കാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യുക. നിങ്ങൾക്ക് നിറങ്ങളും ഫോണ്ടുകളും മാറ്റാൻ കഴിയും.' },
+            { target: '#images-accordion summary', text: 'നിങ്ങളുടെ സ്വന്തം ഫോട്ടോകളും പശ്ചാത്തല ചിത്രങ്ങളും ഇവിടെ അപ്‌ലോഡ് ചെയ്യാം. പശ്ചാത്തലത്തിൻ്റെ സുതാര്യതയും ക്രമീകരിക്കാം.' },
+            { target: '#details-accordion', text: 'വരൻ്റെയും വധുവിൻ്റെയും പേരും വിലാസവും പോലുള്ള വിവരങ്ങൾ ഈ ഭാഗത്ത് പൂരിപ്പിക്കുക.' },
+            { target: '#qrCodeUrl', text: 'വിവാഹ സ്ഥലത്തേക്കുള്ള ഗൂഗിൾ മാപ്സ് ലിങ്ക് ഇവിടെ നൽകിയാൽ, കാർഡിൽ ഒരു QR കോഡ് യാന്ത്രികമായി ദൃശ്യമാകും.' },
+            { target: '#invitation-preview', text: 'നിങ്ങൾ വരുത്തുന്ന മാറ്റങ്ങൾ എല്ലാം തത്സമയം ഇവിടെ കാണാൻ സാധിക്കും. ഇത് നിങ്ങളുടെ ഫൈനൽ ഡിസൈൻ ആണ്.' },
+            { target: '#download-btn', text: 'എല്ലാം പൂർത്തിയായിക്കഴിഞ്ഞാൽ, ഈ ബട്ടൺ ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ ക്ഷണക്കത്ത് ഉയർന്ന നിലവാരമുള്ള PDF ആയി ഡൗൺലോഡ് ചെയ്യാം.' }
+        ];
 
-        // Preview elements
-        const groomNamePreview = document.getElementById('preview-groomName');
-        const groomDetailsPreview = document.getElementById('preview-groomDetails');
-        const brideNamePreview = document.getElementById('preview-brideName');
-        const brideDetailsPreview = document.getElementById('preview-brideDetails');
-        const eventDetailsPreview = document.getElementById('preview-eventDetails');
-        const receptionDetailsPreview = document.getElementById('preview-receptionDetails');
+        const dom = { inputs: {}, previews: { card: document.getElementById('invitation-preview') }, buttons: {}, tutorial: {} };
+        let currentTutorialStep = -1;
+        let currentHighlightedElement = null;
 
+        // --- CORE FUNCTIONS ---
         function updatePreview() {
-            groomNamePreview.innerText = groomNameInput.value;
-            groomDetailsPreview.innerHTML = groomDetailsInput.value.replace(/\n/g, '<br>');
-            brideNamePreview.innerText = brideNameInput.value;
-            brideDetailsPreview.innerHTML = brideDetailsInput.value.replace(/\n/g, '<br>');
-            eventDetailsPreview.innerText = eventDetailsInput.value;
-            receptionDetailsPreview.innerText = receptionDetailsInput.value;
+            for (const key in dom.inputs) {
+                if (dom.previews[key] && !['SELECT', 'COLOR', 'FILE', 'RANGE'].includes((dom.inputs[key].tagName || dom.inputs[key].type).toUpperCase())) {
+                    const el = dom.previews[key]; const input = dom.inputs[key];
+                    el.innerHTML = input.tagName === 'TEXTAREA' ? input.value.replace(/\n/g, '<br>') : input.value;
+                }
+            }
+            dom.previews.card.style.setProperty('--card-accent-color', dom.inputs.accentColor.value);
+            dom.previews.card.style.setProperty('--card-heading-font', dom.inputs.headingFont.value);
+            dom.previews.card.style.setProperty('--card-body-font', dom.inputs.bodyFont.value);
+            dom.previews.card.style.setProperty('--card-bg-opacity', dom.inputs.bgOpacity.value);
         }
 
-        // Add event listeners to all inputs
-        document.querySelectorAll('.editor input, .editor textarea').forEach(input => {
-            input.addEventListener('input', updatePreview);
-        });
+        function applyTheme(themeKey) {
+            const theme = themes[themeKey]; if (!theme) return;
+            dom.previews.card.className = 'invitation-card ' + theme.cardClass;
+            dom.inputs.accentColor.value = theme.accentColor;
+            dom.inputs.headingFont.value = theme.headingFont;
+            dom.inputs.bodyFont.value = theme.bodyFont;
+            dom.previews.card.style.setProperty('--card-bg-image', theme.backgroundImage);
+            dom.inputs.bgPhoto.value = ''; dom.inputs.bgOpacity.value = 1; updatePreview();
+        }
 
-        // PDF Download functionality
-        const downloadButton = document.getElementById('download-btn');
-        downloadButton.addEventListener('click', () => {
-            html2canvas(document.getElementById('invitation-preview'), { scale: 2, useCORS: true })
+        function handleReligionChange() {
+            const template = religionTemplates[dom.inputs.religionSelect.value];
+            dom.inputs.topSymbol.value = template.topSymbol;
+            dom.inputs.vivahamTitle.value = template.title;
+            dom.inputs.invitationRequest.value = template.requestText; updatePreview();
+        }
+
+        function handleFileUpload(event, isBackground) {
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e) => {
+                if (isBackground) { dom.previews.card.style.setProperty('--card-bg-image', `url(${e.target.result})`); } 
+                else { dom.previews.photo.src = e.target.result; dom.previews.photoContainer.style.display = 'block'; }
+            }; reader.readAsDataURL(file);
+        }
+
+        function generateQRCode() {
+            const url = dom.inputs.qrCodeUrl.value.trim();
+            if (dom.previews.qrcode) dom.previews.qrcode.innerHTML = '';
+            if (url) { new QRCode(dom.previews.qrcode, { text: url, width: 80, height: 80 }); dom.previews.qrcode.style.display = 'block'; } 
+            else { dom.previews.qrcode.style.display = 'none'; }
+        }
+
+        function resetForm() {
+            for (const key in defaultValues) { if (dom.inputs[key]) dom.inputs[key].value = defaultValues[key]; }
+            dom.inputs.religionSelect.value = 'hindu'; dom.inputs.themeSelect.value = 'royalGold';
+            dom.inputs.couplePhoto.value = ''; dom.previews.photo.src = ''; dom.previews.photoContainer.style.display = 'none';
+            dom.inputs.qrCodeUrl.value = ''; handleReligionChange(); applyTheme('royalGold'); generateQRCode();
+        }
+
+        function downloadAsPDF() {
+            dom.loader.style.display = 'block'; dom.buttons.download.disabled = true; dom.buttons.download.innerText = 'തയ്യാറാക്കുന്നു...';
+            html2canvas(dom.previews.card, { scale: 3, useCORS: true, allowTaint: true })
             .then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                // A5 format is 148 x 210 mm
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('wedding-invitation.pdf');
-            });
-        });
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [148, 210] }); // A5
+                pdf.addImage(imgData, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+                pdf.save('vivaha-kshanam.pdf');
+            })
+            .catch(err => { console.error("PDF generation failed:", err); alert("ക്ഷമിക്കണം, PDF നിർമ്മിക്കുന്നതിൽ ഒരു പിശക് സംഭവിച്ചു."); })
+            .finally(() => { dom.loader.style.display = 'none'; dom.buttons.download.disabled = false; dom.buttons.download.innerText = 'PDF ഡൗൺലോഡ്'; });
+        }
+        
+        // --- TUTORIAL FUNCTIONS ---
+        function startTutorial() {
+            dom.tutorial.overlay.style.display = 'flex'; currentTutorialStep = -1; showTutorialStep(0);
+        }
 
-        // Initial call to populate the preview
-        updatePreview();
+        function endTutorial() {
+            dom.tutorial.overlay.style.display = 'none';
+            if(currentHighlightedElement) currentHighlightedElement.classList.remove('tutorial-highlight');
+        }
+
+        function showTutorialStep(index) {
+            if (currentHighlightedElement) currentHighlightedElement.classList.remove('tutorial-highlight');
+            currentTutorialStep = index;
+            const step = tutorialSteps[currentTutorialStep];
+            const targetEl = document.querySelector(step.target);
+            if (!targetEl) { endTutorial(); return; }
+
+            let parent = targetEl.closest('details'); if (parent) parent.open = true;
+            
+            targetEl.classList.add('tutorial-highlight');
+            currentHighlightedElement = targetEl;
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const targetRect = targetEl.getBoundingClientRect();
+            const tooltip = dom.tutorial.tooltip;
+            
+            const tooltipTop = window.scrollY + targetRect.bottom + 15;
+            let tooltipLeft = window.scrollX + targetRect.left + (targetRect.width / 2) - (tooltip.offsetWidth / 2);
+            if (tooltipLeft < 10) tooltipLeft = 10;
+            if (tooltipLeft + tooltip.offsetWidth > window.innerWidth - 10) tooltipLeft = window.innerWidth - tooltip.offsetWidth - 10;
+            
+            tooltip.style.top = `${tooltipTop}px`;
+            tooltip.style.left = `${tooltipLeft}px`;
+
+            dom.tutorial.text.textContent = step.text;
+            dom.tutorial.counter.textContent = `${currentTutorialStep + 1} / ${tutorialSteps.length}`;
+            dom.tutorial.prev.style.visibility = (index === 0) ? 'hidden' : 'visible';
+            dom.tutorial.next.textContent = (index === tutorialSteps.length - 1) ? 'പൂർത്തിയാക്കുക' : 'അടുത്തത്';
+        }
+
+        // --- INITIALIZATION ---
+        function initialize() {
+            Object.keys(defaultValues).forEach(key => dom.inputs[key] = document.getElementById(key));
+            for (const key in themes) { const option = document.createElement('option'); option.value = key; option.textContent = themes[key].name; document.getElementById('themeSelect').appendChild(option); }
+            Object.assign(dom.inputs, { themeSelect: document.getElementById('themeSelect'), religionSelect: document.getElementById('religionSelect'), topSymbol: document.getElementById('topSymbol'), accentColor: document.getElementById('accentColor'), headingFont: document.getElementById('headingFont'), bodyFont: document.getElementById('bodyFont'), couplePhoto: document.getElementById('couplePhoto'), bgPhoto: document.getElementById('bgPhoto'), bgOpacity: document.getElementById('bgOpacity'), qrCodeUrl: document.getElementById('qrCodeUrl') });
+            document.querySelectorAll('[id^="preview-"]').forEach(el => dom.previews[el.id.replace('preview-', '')] = el);
+            Object.assign(dom.buttons, { download: document.getElementById('download-btn'), reset: document.getElementById('reset-btn'), tutorial: document.getElementById('show-tutorial-btn') });
+            dom.loader = document.getElementById('loader');
+            Object.assign(dom.tutorial, { overlay: document.getElementById('tutorial-overlay'), tooltip: document.getElementById('tutorial-tooltip'), text: document.getElementById('tutorial-text'), prev: document.getElementById('tutorial-prev'), next: document.getElementById('tutorial-next'), close: document.getElementById('tutorial-close'), counter: document.getElementById('tutorial-step-counter') });
+
+            Object.values(dom.inputs).forEach(input => input.addEventListener('input', updatePreview));
+            dom.inputs.themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+            dom.inputs.religionSelect.addEventListener('change', handleReligionChange);
+            dom.inputs.couplePhoto.addEventListener('change', (e) => handleFileUpload(e, false));
+            dom.inputs.bgPhoto.addEventListener('change', (e) => handleFileUpload(e, true));
+            dom.inputs.qrCodeUrl.addEventListener('input', generateQRCode);
+            dom.buttons.download.addEventListener('click', downloadAsPDF);
+            dom.buttons.reset.addEventListener('click', resetForm);
+            
+            dom.buttons.tutorial.addEventListener('click', startTutorial);
+            dom.tutorial.next.addEventListener('click', () => { if (currentTutorialStep < tutorialSteps.length - 1) showTutorialStep(currentTutorialStep + 1); else endTutorial(); });
+            dom.tutorial.prev.addEventListener('click', () => { if (currentTutorialStep > 0) showTutorialStep(currentTutorialStep - 1); });
+            dom.tutorial.close.addEventListener('click', endTutorial);
+
+            resetForm();
+        }
+
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
