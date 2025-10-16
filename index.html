@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>വിവാഹ ക്ഷണപത്രം</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Thasadith:wght@700&display=swap');
+
+        body {
+            font-family: 'Manjari', sans-serif;
+            background-color: #f0eada;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 30px;
+            padding: 30px;
+            flex-wrap: wrap;
+        }
+
+        .editor, .preview {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .editor { width: 350px; }
+        .editor h2 { margin-top: 0; margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid #ddd; padding-bottom: 10px; color: #5a4a3a; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 700; color: #555; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+            font-family: 'Manjari', sans-serif; font-size: 16px; box-sizing: border-box;
+        }
+
+        #download-btn {
+            width: 100%; padding: 15px; background-color: #8B4513; color: white; border: none;
+            border-radius: 5px; font-size: 18px; font-weight: 700; cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #download-btn:hover { background-color: #65320d; }
+
+        .preview { width: 550px; }
+
+        .invitation-card {
+            position: relative;
+            background-color: #fdf5e6; /* Parchment color */
+            padding: 40px;
+            text-align: center;
+            border: 1px solid #ded8cd;
+            box-shadow: inset 0 0 0 1px #ded8cd; /* Inner border effect */
+            color: #4a3c2c;
+        }
+
+        .vivaham-title {
+            font-family: 'Thasadith', sans-serif;
+            font-size: 38px;
+            font-weight: 700;
+            color: #c45d5d;
+            margin-bottom: 20px;
+        }
+
+        .parent-details {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .names-block { margin: 15px 0; }
+
+        .name {
+            font-family: 'Thasadith', sans-serif;
+            font-size: 44px;
+            font-weight: 700;
+            color: #3b2e20;
+            line-height: 1.2;
+        }
+        
+        .connector {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .event-details, .reception-details {
+            margin: 25px auto;
+            font-size: 16px;
+            line-height: 1.8;
+            white-space: pre-wrap; /* To respect line breaks from textarea */
+            max-width: 400px;
+        }
+        
+        .invitation-request {
+            font-size: 16px;
+            margin: 20px auto;
+            max-width: 450px;
+        }
+
+        .regards, .compliments {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="editor">
+        <h2>ക്ഷണവിവരങ്ങൾ</h2>
+        <div class="form-group">
+            <label for="groomName">വരൻ്റെ പേര്</label>
+            <input type="text" id="groomName" value="ബിനചന്ദ്രൻ">
+        </div>
+        <div class="form-group">
+            <label for="groomDetails">വരൻ്റെ വിലാസം</label>
+            <textarea id="groomDetails" rows="3">S/o ചന്ദ്രൻ എൻ & സരസ്വതി പി
+തുണ്ടിൽ കിഴക്കതിൽ, തഴവല്ലൂർ പി.ഓ, കൊല്ലം</textarea>
+        </div>
+        <div class="form-group">
+            <label for="brideName">വധുവിൻ്റെ പേര്</label>
+            <input type="text" id="brideName" value="കാവ്യ വിജയൻ">
+        </div>
+        <div class="form-group">
+            <label for="brideDetails">വധുവിൻ്റെ വിലാസം</label>
+            <textarea id="brideDetails" rows="3">D/o വിജയൻ പി & ശ്രീകല വി
+കാർത്തിക, അടൂർ, പറക്കോട്</textarea>
+        </div>
+        <div class="form-group">
+            <label for="eventDetails">തീയതി, സമയം, സ്ഥലം</label>
+            <textarea id="eventDetails" rows="4">04 ഫെബ്രുവരി 2024, ഞായർ, 1199 മകരം 21
+മുഹൂർത്തം : പകൽ 10:46 കഴിഞ്ഞു 11:30 നകം
+മധുരം ഓഡിറ്റോറിയം, കിളിവയൽ, അടൂർ</textarea>
+        </div>
+         <div class="form-group">
+            <label for="receptionDetails">വിവാഹശേഷം (സൽക്കാരം)</label>
+            <textarea id="receptionDetails" rows="3">വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 5.00 മണി മുതൽ അനുഗ്രഹ ഓഡിറ്റോറിയം ഇ.എസ്.ഐ. ജംഗ്ഷൻ, യുവമല</textarea>
+        </div>
+        <button id="download-btn">PDF ആയി ഡൗൺലോഡ് ചെയ്യുക</button>
+    </div>
+
+    <div class="preview">
+        <div id="invitation-preview" class="invitation-card">
+            
+            <h1 class="vivaham-title">... വിവാഹം ...</h1>
+            
+            <div class="parent-details" id="preview-groomDetails">
+                S/o ചന്ദ്രൻ എൻ & സരസ്വതി പി<br>
+                തുണ്ടിൽ കിഴക്കതിൽ, തഴവല്ലൂർ പി.ഓ, കൊല്ലം
+            </div>
+            
+            <div class="names-block">
+                <div class="name" id="preview-groomName">ബിനചന്ദ്രൻ</div>
+                <div class="connector">കൂടെ</div>
+                <div class="name" id="preview-brideName">കാവ്യ വിജയൻ</div>
+            </div>
+            
+            <div class="parent-details" id="preview-brideDetails">
+                D/o വിജയൻ പി & ശ്രീകല വി<br>
+                കാർത്തിക, അടൂർ, പറക്കോട്
+            </div>
+
+            <div class="event-details" id="preview-eventDetails">
+                04 ഫെബ്രുവരി 2024, ഞായർ, 1199 മകരം 21
+                മുഹൂർത്തം : പകൽ 10:46 കഴിഞ്ഞു 11:30 നകം
+                മധുരം ഓഡിറ്റോറിയം, കിളിവയൽ, അടൂർ
+            </div>
+
+            <p class="invitation-request">
+                പ്രസ്തുത മംഗള കർമ്മം ധന്യമാക്കുവാൻ തങ്ങളുടെ സകുടുംബ സാന്നിദ്ധ്യം സാദരം ക്ഷണിച്ചുകൊള്ളുന്നു.
+            </p>
+            
+            <div class="reception-details" id="preview-receptionDetails">
+                വിവാഹശേഷം : അന്നേ ദിവസം വൈകിട്ട് 5.00 മണി മുതൽ അനുഗ്രഹ ഓഡിറ്റോറിയം ഇ.എസ്.ഐ. ജംഗ്ഷൻ, യുവമല
+            </div>
+            
+            <div class="regards">
+                <b>സ്നേഹപൂർവ്വം</b><br>
+                ചന്ദ്രൻ എൻ & സരസ്വതി പി
+            </div>
+            <div class="compliments">
+                <b>ഉപചാരപൂർവ്വം :</b> ജ്യോതിഷ്, അജിമോൾ, കാർത്തിക്
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // Input fields
+        const groomNameInput = document.getElementById('groomName');
+        const groomDetailsInput = document.getElementById('groomDetails');
+        const brideNameInput = document.getElementById('brideName');
+        const brideDetailsInput = document.getElementById('brideDetails');
+        const eventDetailsInput = document.getElementById('eventDetails');
+        const receptionDetailsInput = document.getElementById('receptionDetails');
+
+        // Preview elements
+        const groomNamePreview = document.getElementById('preview-groomName');
+        const groomDetailsPreview = document.getElementById('preview-groomDetails');
+        const brideNamePreview = document.getElementById('preview-brideName');
+        const brideDetailsPreview = document.getElementById('preview-brideDetails');
+        const eventDetailsPreview = document.getElementById('preview-eventDetails');
+        const receptionDetailsPreview = document.getElementById('preview-receptionDetails');
+
+        function updatePreview() {
+            groomNamePreview.innerText = groomNameInput.value;
+            groomDetailsPreview.innerHTML = groomDetailsInput.value.replace(/\n/g, '<br>');
+            brideNamePreview.innerText = brideNameInput.value;
+            brideDetailsPreview.innerHTML = brideDetailsInput.value.replace(/\n/g, '<br>');
+            eventDetailsPreview.innerText = eventDetailsInput.value;
+            receptionDetailsPreview.innerText = receptionDetailsInput.value;
+        }
+
+        // Add event listeners to all inputs
+        document.querySelectorAll('.editor input, .editor textarea').forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        // PDF Download functionality
+        const downloadButton = document.getElementById('download-btn');
+        downloadButton.addEventListener('click', () => {
+            html2canvas(document.getElementById('invitation-preview'), { scale: 2, useCORS: true })
+            .then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                // A5 format is 148 x 210 mm
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('wedding-invitation.pdf');
+            });
+        });
+
+        // Initial call to populate the preview
+        updatePreview();
+    </script>
+</body>
+</html>
